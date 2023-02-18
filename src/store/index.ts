@@ -3,7 +3,7 @@ import { createStore } from "vuex";
 const store = createStore({
   state: () => {
     return {
-      name: "wjl",
+      name: "韦剑龙",
     };
   },
   mutations: {},
