@@ -5,11 +5,14 @@ import { WJLRequestInterceptors, WJLRequestConfig } from "./type";
 class WJLRequest {
   instance: AxiosInstance;
   interceptors?: WJLRequestInterceptors;
+
   constructor(config: WJLRequestConfig) {
     this.instance = axios.create(config);
-    this.interceptors = config.inteceptors;
 
-    // 从config中取出的拦截器时对应实例的拦截器
+    // 保存基本信息
+    this.interceptors = config.interceptors;
+
+    // 从config中取出的拦截器是对应实例的拦截器
     this.instance.interceptors.request.use(
       this.interceptors?.requestInterceptor,
       this.interceptors?.requestInterceptorCatch
@@ -19,9 +22,13 @@ class WJLRequest {
       this.interceptors?.responseInterceptorCatch
     );
 
-    // 添加所有实例都有的拦截器
+    // 添加所有实例都有的拦截器   比如loading
     this.instance.interceptors.request.use(
-      (res) => res,
+      (res) => {
+        // 返回成功的数据处理
+        const data = res.data;
+        return data;
+      },
       (err) => err
     );
     this.instance.interceptors.response.use(
@@ -29,17 +36,38 @@ class WJLRequest {
       (err) => err
     );
   }
-  request(config: WJLRequestConfig): void {
-    if (config.inteceptors?.requestInterceptor) {
-      config = config.inteceptors.requestInterceptor(config);
-    }
 
-    this.instance.request(config).then((res) => {
-      if (config.inteceptors?.responseInterceptor) {
-        res = config.inteceptors.responseInterceptor(res);
+  request<T>(config: WJLRequestConfig<T>): Promise<T> {
+    return new Promise((reslove, reject) => {
+      // 单个请求对请求config的处理
+      if (config.interceptors?.requestInterceptor) {
+        config = config.interceptors.requestInterceptor(config);
       }
-      console.log(res);
+
+      this.instance
+        .request<any, T>(config)
+        .then((res) => {
+          if (config.interceptors?.responseInterceptor) {
+            res = config.interceptors.responseInterceptor(res);
+          }
+          reslove(res);
+        })
+        .catch((err) => {
+          reject(err);
+        });
     });
+  }
+  get<T>(config: WJLRequestConfig<T>): Promise<T> {
+    return this.request<T>({ ...config, method: "GET" });
+  }
+  post<T>(config: WJLRequestConfig<T>): Promise<T> {
+    return this.request<T>({ ...config, method: "POST" });
+  }
+  delete<T>(config: WJLRequestConfig<T>): Promise<T> {
+    return this.request<T>({ ...config, method: "DELETE" });
+  }
+  patch<T>(config: WJLRequestConfig<T>): Promise<T> {
+    return this.request<T>({ ...config, method: "PATCH " });
   }
 }
 

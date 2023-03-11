@@ -2,8 +2,9 @@
 import WJLRequest from "./request";
 import { BASE_URL, TIME_OUT } from "./request/config";
 
-const wjlRequestuest = new WJLRequest({
+const wjlRequest = new WJLRequest({
   baseURL: BASE_URL,
   timeout: TIME_OUT,
+  interceptors: {},
 });
-export default wjlRequestuest;
+export default wjlRequest;
